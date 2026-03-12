@@ -85,10 +85,14 @@ Rules:
       "x-api-key": ANTHROPIC_KEY,
       "anthropic-version": "2023-06-01",
     },
-    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content }] }),
+    body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 1000, messages: [{ role: "user", content }] }),
   });
 
   const data = await resp.json();
+  if (!resp.ok) {
+    console.error("Anthropic API error:", resp.status, JSON.stringify(data));
+    throw new Error(`Anthropic API ${resp.status}: ${data?.error?.message || "unknown error"}`);
+  }
   const text = data.content?.map(c => c.text || "").join("") || "";
   const clean = text.replace(/```json|```/g, "").trim();
   return JSON.parse(clean);
@@ -279,7 +283,7 @@ async function handleFile(msg, fileId, fileName, mimeType) {
     });
 
   } catch (err) {
-    console.error("Extract error:", err);
+    console.error("Extract error:", err.message);
     await bot.deleteMessage(chatId, processingMsg.message_id).catch(() => {});
     await bot.sendMessage(chatId,
       "⚠️ No pude extraer los datos automáticamente. Intenta con otra imagen más clara, o escribe /manual para llenar los datos a mano."
